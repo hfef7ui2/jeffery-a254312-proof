@@ -1,0 +1,15 @@
+name = "jeffery"
+version = "0.1.0"
+defaultTargets = ["Jeffery"]
+
+[[require]]
+name = "mathlib"
+git = "https://github.com/leanprover-community/mathlib4"
+rev = "v4.34.0"
+
+[[lean_lib]]
+name = "Jeffery"
+
+[[lean_lib]]
+name = "Logs23"
+srcDir = "vendor"

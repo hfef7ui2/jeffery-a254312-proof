@@ -1,0 +1,33 @@
+lean --version
+Lean (version 4.34.0, x86_64-w64-windows-gnu, commit 293d5d0c0c3f3dded4688b3ccd6a33939ac5102b, Release)
+lake build
+Build completed successfully (8945 jobs).
+lake env lean Jeffery.lean
+'Jeffery.dyadic_gap' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Jeffery.entry_has_unique_position' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Jeffery.jeffery_conjecture' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Jeffery.ascent_iff_occurs' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Jeffery.jeffery_sequence' depends on axioms: [propext, Classical.choice, Quot.sound]
+
+LeanChecker.replayFromImports (all project and vendored modules)
+replayed Jeffery
+replayed Jeffery.Antidiagonal
+replayed Jeffery.Array
+replayed Jeffery.Beatty
+replayed Jeffery.Gap
+replayed Jeffery.Normalization
+replayed Jeffery.Permutation
+replayed Jeffery.Statement
+replayed Logs23.CauchyBinet
+replayed Logs23.Confluence
+replayed Logs23.Constantes
+replayed Logs23.Encadrements
+replayed Logs23.ExpKernel
+replayed Logs23.GenVandermonde
+replayed Logs23.Interpolation
+replayed Logs23.Lam
+replayed Logs23.Logs23_Enonces
+replayed Logs23.Pont
+replayed Logs23.Proposition
+replayed Logs23.TwoLog
+replayed Logs23.TwoLog_Enonces

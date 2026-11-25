@@ -1,0 +1,302 @@
+\documentclass[11pt,a4paper]{amsart}
+\usepackage{amsmath,amssymb}
+\usepackage[margin=30mm]{geometry}
+\usepackage[hidelinks]{hyperref}
+
+\hypersetup{
+  pdftitle={The One-Step Ascent Set of Jeffery's Collatz Map},
+  pdfauthor={Yunkun Chen}
+}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newcommand{\Npos}{\mathbb{Z}_{>0}}
+
+\title[The ascent set of Jeffery's Collatz map]
+  {The One-Step Ascent Set of Jeffery's Collatz Map}
+\author{Yunkun Chen}
+\date{November 25, 2026}
+\subjclass[2020]{Primary 11B83. Secondary 11D61, 68V20.}
+\keywords{Collatz map, Beatty sequence, powers of two and three, formal proof, Lean}
+
+\begin{document}
+
+\begin{abstract}
+L.~Edson Jeffery conjectured that the array defining OEIS A254312
+enumerates, without repetition, the positive integers \(m\) for which his
+Collatz-derived map \(S\) satisfies \(S(m)>m\). We prove this conjecture.
+The row containing an ascent \(m\) is determined by
+\(1+\nu_2(3m-2)\), and a congruence modulo \(3\) determines its column.
+An explicit separation estimate for powers of \(2\) and \(3\) gives the
+strict ascent criterion needed in the proof. A Lean~4 formalization
+verifies the array bijection and the upward-antidiagonal enumeration.
+\end{abstract}
+
+\maketitle
+
+\section{Introduction}
+
+For \(z\in\Npos\), let \(\nu_2(z)\) be the exponent of \(2\) in \(z\).
+The accelerated odd Collatz map is
+\[
+  F(x)=\frac{3x+1}{2^{\nu_2(3x+1)}}\qquad (x\in\Npos,\ x\text{ odd}).
+\]
+Jeffery's map, as defined in OEIS A257480 \cite{jeffery-map}, is
+\begin{equation}\label{eq:step}
+  S(m)=\frac{3+(3/2)^{\nu_2(1+F(4m-3))}(1+F(4m-3))}{6}
+  \qquad(m\in\Npos).
+\end{equation}
+OEIS A254311 records the positive integers \(m\) with \(S(m)>m\)
+\cite{jeffery-ascents}. For the Beatty sequence A117630 \cite{beatty},
+write
+\[
+ a(n)=\left\lfloor\frac{n\log 3}{\log(3/2)}\right\rfloor.
+\]
+Jeffery proposed that the array in A254312 \cite{jeffery-array}, with
+entries
+\begin{equation}\label{eq:array}
+ A(n,k)=\frac{1}{6}
+ \left[
+  2^{a(n)}\left(6k-\frac{(3-(-1)^{a(n)})(1-(-1)^n)}{2}\right)
+  -2^n+4
+ \right],\qquad n,k\in\Npos,
+\end{equation}
+enumerates the same set without repetition.
+
+\begin{theorem}\label{thm:main}
+The map \((n,k)\mapsto A(n,k)\) is a bijection from
+\(\Npos^2\) onto \(\{m\in\Npos:S(m)>m\}\). If \(A(n,k)=m\), then
+\[
+ n=1+\nu_2(3m-2).
+\]
+In particular, A254312 is a permutation of A254311.
+\end{theorem}
+
+The proof uses a one-sided gap estimate for \(2^{n+v}-3^v\).
+Kayadibi \cite[Theorem~6.2]{kayadibi} proves a stronger estimate for
+\(v\ge2\) at the least admissible exponent \(n+v\).
+We include a short derivation from Ellison's separation theorem
+\cite[Theorem~3]{ellison}. Appendix~\ref{sec:formal-gap} gives the
+derivation used in the Lean development, which takes its
+large-exponent bound from Merle \cite{merle}.
+
+\newpage
+\section{A gap estimate and the ascent criterion}
+
+\begin{lemma}\label{lem:gap}
+If \(n,v\in\Npos\) and \(3^v<2^{n+v}\), then
+\begin{equation}\label{eq:gap}
+  2^{n+v}-3^v\ge 2^n-1.
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+For fixed \(v\), the difference between the two sides of \eqref{eq:gap},
+\(2^n(2^v-1)-3^v+1\), increases with \(n\). It suffices to take
+\(n=x-v\), where \(x\) is the least integer with \(2^x>3^v\).
+The inequalities \(2^v<3^v<2^{2v}\) give \(v<x\le 2v\).
+For \(1\le v\le17\), the exact integer calculations in
+Table~\ref{tab:small} prove \eqref{eq:gap}. If \(v\ge18\), then
+\(3^v\ge3^{18}>2^{27}\), so \(x>27\). Ellison
+\cite[Theorem~3]{ellison} gives
+\[
+  2^x-3^v>2^x e^{-x/10}>2^{x-v}.
+\]
+The last inequality follows from \(x/10\le v/5<v\log 2\).
+\end{proof}
+
+\begin{lemma}\label{lem:criterion}
+Fix \(m\in\Npos\) and put \(n=1+\nu_2(3m-2)\). Write
+\[
+  3m-2=2^{n-1}u,\qquad u+1=2^v q,\qquad
+  v=\nu_2(u+1).
+\]
+Here \(u,q\) are positive and odd and \(v\ge1\). Then \(S(m)\) is a
+positive integer and
+\begin{equation}\label{eq:criterion}
+  S(m)>m
+  \quad\Longleftrightarrow\quad
+  3^v>2^{n+v}
+  \quad\Longleftrightarrow\quad
+  n+v>a(n).
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+The identity \(3(4m-3)+1=4(3m-2)\) shows that \(F(4m-3)=u\).
+Consequently
+\[
+  6S(m)=3+3^v q,\qquad 6m=2^{n+v}q-2^n+4.
+\]
+The first numerator is even and divisible by \(3\), so \(S(m)\)
+is a positive integer. Subtraction gives
+\begin{equation}\label{eq:difference}
+  6(S(m)-m)=(3^v-2^{n+v})q+2^n-1.
+\end{equation}
+The two powers have opposite parity. If \(3^v>2^{n+v}\), the right-hand
+side is positive. If \(3^v<2^{n+v}\), Lemma~\ref{lem:gap} and \(q\ge1\)
+make it nonpositive. Finally,
+\[
+  3^v>2^{n+v}
+  \quad\Longleftrightarrow\quad
+  n+v>\frac{n\log 3}{\log(3/2)}.
+\]
+Since \(n+v\) is an integer, this is precisely \(n+v>a(n)\).
+\end{proof}
+
+\section{Proof of the bijection}
+
+\begin{proof}[Proof of Theorem~\ref{thm:main}]
+For a positive integer \(m\) and its associated row
+\(n=1+\nu_2(3m-2)\), write \(a=a(n)\). The identity
+\[
+  3m-2+2^{n-1}=2^{n-1+v}q
+\]
+and the oddness of \(q\) show that the last condition in
+\eqref{eq:criterion} is equivalent to \(2^a\) dividing
+\(3m-2+2^{n-1}\). For an ascent we can therefore write
+\begin{equation}\label{eq:t}
+  3m=2^a t-2^{n-1}+2,\qquad t\in\Npos.
+\end{equation}
+Reduction modulo \(3\) gives
+\[
+ t\equiv
+ \begin{cases}
+  0\pmod{3}, & n\text{ even},\\
+  (-1)^{a+1}\pmod{3}, & n\text{ odd}.
+ \end{cases}
+\]
+Indeed, \(2^a t\equiv (-1)^{n-1}-2\pmod{3}\) and \(2^a\equiv
+(-1)^a\pmod{3}\). Thus the positive solutions \(t\), in increasing
+order, are
+\begin{equation}\label{eq:column}
+  t=3k-c,\qquad
+  c=\frac{(3-(-1)^a)(1-(-1)^n)}{4},\qquad k\in\Npos.
+\end{equation}
+The correction \(c\) is \(0\) when \(n\) is even, \(1\) when \(n\) is odd
+and \(a\) even, and \(2\) when both are odd. Substituting
+\eqref{eq:column} into \eqref{eq:t} gives exactly \eqref{eq:array}.
+
+Conversely, choose any \(n,k\in\Npos\), let \(t\) be given by
+\eqref{eq:column}, and define \(m\) by \eqref{eq:t}. The congruence
+makes \(m\) an integer, and \(a(n)\ge2n\) follows from \((3/2)^2<3\).
+It follows that \(2^a t-2^{n-1}+2>0\). Moreover,
+\[
+  3m-2=2^{n-1}\bigl(2^{a-n+1}t-1\bigr).
+\]
+The factor in parentheses is positive and odd, so \(m\) recovers the
+chosen row \(n\). Also \(3m-2+2^{n-1}=2^a t\), hence \(m\) is an ascent
+by Lemma~\ref{lem:criterion}. For this \(m\), equation \eqref{eq:t}
+fixes \(t\) and equation \eqref{eq:column} fixes \(k\).
+
+The upward-antidiagonal reading assigns the index
+\(T_{n+k-2}+k\) to \((n,k)\), where \(T_s=s(s+1)/2\).
+For the diagonal with \(n+k-2=s\), the indices are
+\(T_s+1,\ldots,T_{s+1}\). These intervals partition \(\Npos\),
+so reading the array in this order lists each ascent once.
+\end{proof}
+
+\section{Lean formalization}\label{sec:lean}
+
+The accompanying Lean~4 project \cite{lean} uses mathlib \cite{mathlib}.
+It defines \(S\) over the rationals using \eqref{eq:step} and proves
+that it agrees with a natural-number implementation. The signed
+formula \eqref{eq:array} is expressed in the integers, and the
+development proves that the displayed divisions are exact for
+positive indices. The exponent \(a(n)\) is defined using the real
+logarithm and floor.
+
+The theorem \texttt{Jeffery.ascent\_iff\_occurs} identifies the image
+of the array with the ascent set, and
+\texttt{Jeffery.entry\_has\_unique\_position} establishes positivity
+and injectivity. Theorems \texttt{Jeffery.jeffery\_conjecture} and
+\texttt{Jeffery.jeffery\_sequence} give the unique-occurrence statements
+in the array and in its upward-antidiagonal reading, respectively.
+The proof of \texttt{Jeffery.dyadic\_gap} uses the argument in
+Appendix~\ref{sec:formal-gap}. Merle's proof and its dependencies
+\cite{merle} are included with attribution in the companion project.
+
+The project was built with Lean~4.34.0 and mathlib~4.34.0. The kernel
+also replayed the proof objects for all \(21\) project modules, including
+the bundled logarithmic-bound modules. For the gap theorem, the
+positivity and uniqueness theorem, and the three occurrence theorems
+listed above, \texttt{\#print axioms} reports
+\texttt{propext}, \texttt{Classical.choice}, and \texttt{Quot.sound}.
+The companion archive \path{Jeffery-A254312-Lean.zip} contains the
+source, pinned dependency manifest, build instructions, and
+verification log.
+
+\paragraph{AI assistance.}
+OpenAI Codex assisted with proof development, Lean formalization,
+and preparation of the manuscript.
+
+\appendix
+\section{The gap estimate used in Lean}\label{sec:formal-gap}
+
+Assume \(n,v\ge1\) and \(3^v<2^x\), where \(x=n+v\). Put
+\(\Delta=x\log 2-v\log 3>0\). If
+\begin{equation}\label{eq:delta}
+  \Delta\ge\frac{1}{2^v-1},
+\end{equation}
+then \(e^\Delta\ge1+\Delta\) yields
+\(2^x/3^v\ge 2^v/(2^v-1)\). Rearranging gives the stronger inequality
+\(2^x-3^v\ge 2^{x-v}\).
+
+For \(v>20000\), Merle's theorem \texttt{Logs23.lam\_lower\_thm}
+\cite{merle} bounds \(\lvert (v+n)\log 2-v\log 3\rvert\) below
+by \(1/(2^v-1)\). The sign of \(\Delta\) gives \eqref{eq:delta}.
+
+For \(18\le v\le20000\), the exact comparisons
+\(2^{50508}<3^{31867}\) and \(3^{47468}<2^{75235}\) give
+\[
+  \frac{50508}{31867}<\frac{\log 3}{\log 2}
+     <\frac{75235}{47468}.
+\]
+Suppose \(x/v\le75235/47468\). Since \(\Delta>0\), the integers
+\(s=31867x-50508v\) and \(t=75235v-47468x\) satisfy \(s\ge1\)
+and \(t\ge0\). The determinant identity
+\(31867\cdot75235-50508\cdot47468=1\) gives
+\(v=47468s+31867t\ge47468\), a contradiction. Therefore
+\(47468x-75235v\ge1\), and the upper rational bound gives
+\[
+  \Delta>\frac{\log 2}{47468}
+   >\frac{1}{94936}>\frac{1}{2^v-1}.
+\]
+Here \(\log 2=\int_1^2 dt/t>1/2\), and \(v\ge18\).
+In the Lean development the two power comparisons are decided by
+exact natural-number computation.
+
+For \(1\le v\le17\), monotonicity in \(n\) reduces the check to the least
+\(x\) with \(2^x>3^v\), as in Lemma~\ref{lem:gap}.
+Table~\ref{tab:small} gives this \(x\) and the nonnegative excess
+\(E=2^x-3^v-2^{x-v}+1\). In Lean, the same range is handled by
+an elementary estimate for \(n>v\) and a kernel-checked finite
+comparison for \(n\le v\). For the elementary estimate,
+\(3^v\le4^v\le2^{n-1+v}\) and
+\(2^{n-1+v}\ge2^n\) imply \(2^{n+v}-3^v\ge2^n\).
+
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{@{}rrr@{\qquad}rrr@{}}
+    \hline
+    \(v\)&\(x\)&\(E\) & \(v\)&\(x\)&\(E\)\\
+    \hline
+    1&2&0 & 10&16&6\,424\\
+    2&4&4 & 11&18&84\,870\\
+    3&5&2 & 12&20&516\,880\\
+    4&7&40 & 13&21&502\,574\\
+    5&8&6 & 14&23&3\,605\,128\\
+    6&10&280 & 15&24&2\,427\,798\\
+    7&12&1\,878 & 16&26&24\,061\,120\\
+    8&13&1\,600 & 17&27&5\,076\,542\\
+    9&15&13\,022 & &&\\
+    \hline
+  \end{tabular}
+  \caption{Exact excess at the least admissible exponent \(x\).}
+  \label{tab:small}
+\end{table}
+
+\bibliographystyle{amsplain}
+\bibliography{references}
+
+\end{document}
